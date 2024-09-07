@@ -1,10 +1,13 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
 import tensorflow as tf
 import aiohttp
 import asyncio
+import multiprocessing
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR) 
 
-path = 'video/train0208.tfrecord'
-output_path = 'video/video_ids.train0208.tfrecord'
+
 
 async def resolve_video_id(session, random_id):
     url_prefix = "http://data.yt8m.org/2/j/i/"
@@ -21,7 +24,7 @@ async def resolve_video_id(session, random_id):
                 end = content.rfind('"')
                 return content[start:end]
             else:
-                print(f"Failed to resolve video ID for {random_id}, HTTP Status: {response.status}")
+                pass
     except Exception as e:
         print(f"Error while requesting {full_url}: {str(e)}")
     return None
@@ -41,7 +44,7 @@ async def resolve_ids(dataset):
 
 def serialize_example(original_example, video_id):
     labels_dense = tf.sparse.to_dense(original_example['labels'])
-
+    
     feature = {
         'id': tf.train.Feature(bytes_list=tf.train.BytesList(value=[original_example['id'].numpy()])),
         'labels': tf.train.Feature(int64_list=tf.train.Int64List(value=labels_dense.numpy())),
@@ -56,14 +59,29 @@ async def update_tfrecord(input_path, output_path):
     resolved_ids = await resolve_ids(dataset)
     
     with tf.io.TFRecordWriter(output_path) as writer:
+        count = 0
         for record, video_id in zip(dataset, resolved_ids):
             if video_id is not None:
                 example = serialize_example(record, video_id)
                 writer.write(example)
+                count += 1
+
+        print(f"Processed {count} records from {input_path} out of {len(resolved_ids)}, percentage: {count / len(resolved_ids) * 100}%")
+
+def process_file(input_path, output_path):
+    start = time.time()
+    asyncio.run(update_tfrecord(input_path, output_path))
+    print(f"Processed {input_path} in {time.time() - start} seconds")
 
 if __name__ == '__main__':
-    start = time.time()
-    # Run the async function to update the TFRecord
-    asyncio.run(update_tfrecord(path, output_path))
+    files = ['video/' + f for f in os.listdir('video') if f.endswith('.tfrecord') and 'video_ids' not in f]
+    files = files
+    output_paths = [f.replace('train', 'video_ids.train') for f in files]
 
-    print(f"Execution time: {time.time() - start} seconds")
+    print(files)
+
+    start = time.time()
+    with multiprocessing.Pool(processes=12) as pool:
+        pool.starmap(process_file, zip(files, output_paths))
+    
+    print(f"Total execution time: {time.time() - start} seconds")
