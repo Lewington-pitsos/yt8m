@@ -39,21 +39,21 @@ async def extract_data(session, video_data):
     thumbnails = await asyncio.gather(*tasks)
     
     for i, item in enumerate(video_data.get('items', [])):
-        videos.append({
-            'videoId': item['id'],
-            'title': item['snippet']['title'],
-            'tags': ', '.join(item['snippet'].get('tags', [])),
-            'viewCount': item['statistics']['viewCount'] if 'viewCount' in item['statistics'] else "0",
-            'likeCount': item['statistics']['likeCount'] if 'likeCount' in item['statistics'] else "0",
-            'favoriteCount': item['statistics']['favoriteCount'] if 'favoriteCount' in item['statistics'] else "0",
-            'commentCount': item['statistics']['commentCount'] if 'commentCount' in item['statistics'] else "0",
-            'duration': item['contentDetails']['duration'],
-            'description': item['snippet']['description'],
-            'channelId': item['snippet']['channelId'],
-            'channelTitle': item['snippet']['channelTitle'],
-            'publishedAt': item['snippet']['publishedAt'],
-            'thumbnailStandard': thumbnails[i]
-        })
+        if 'viewCount' in item['statistics'] and 'likeCount' in item['statistics'] and 'commentCount' in item['statistics']:
+            videos.append({
+                'videoId': item['id'],
+                'title': item['snippet']['title'],
+                'tags': ', '.join(item['snippet'].get('tags', [])),
+                'viewCount': int(item['statistics']['viewCount']),
+                'likeCount': int(item['statistics']['likeCount']),
+                'commentCount': int(item['statistics']['commentCount']),
+                'duration': item['contentDetails']['duration'],
+                'description': item['snippet']['description'],
+                'channelId': item['snippet']['channelId'],
+                'channelTitle': item['snippet']['channelTitle'],
+                'publishedAt': item['snippet']['publishedAt'],
+                'thumbnailStandard': thumbnails[i]
+            })
     return videos
 
 async def save_video_info(video_id_lists, h5_filename):

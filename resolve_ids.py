@@ -74,10 +74,11 @@ def process_file(input_path, output_path):
 def resolve_all(files, n_workers=12):
     output_paths = [f.replace('train', 'video_ids.train') for f in files]
 
-    print(files)
+    wanted_files = [(f, o) for f, o in zip(files, output_paths) if not os.path.exists(o)]
+    
 
     with multiprocessing.Pool(processes=n_workers) as pool:
-        pool.starmap(process_file, zip(files, output_paths))
+        pool.starmap(process_file, wanted_files)
     
     return output_paths
 

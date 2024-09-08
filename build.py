@@ -1,3 +1,5 @@
+import json
+import boto3
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import asyncio
@@ -18,9 +20,19 @@ def _parse_function(proto):
 
 YT_DATALIST_LIMIT = 50
 
-def main():
+def main(bucket_name):
     start = time.time()
 
+    with open('.credentials.json') as f:
+        credentials = json.load(f)
+
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id=credentials['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=credentials['AWS_SECRET']
+    )
+
+    s3_prefix = 'yt8m-thumbs'
     tfrecords = ['video/' + f for f in os.listdir('video') if f.endswith('.tfrecord') and 'video_ids' not in f]
 
     print(f"Found {len(tfrecords)} tfrecords")
@@ -33,6 +45,11 @@ def main():
     for id_file in id_files:
         start = time.time()
         h5_filename = f"{id_file.replace('.tfrecord', '.h5')}"
+        if os.path.exists(h5_filename):
+            print(f"Skipping {id_file} because {h5_filename} already exists")
+            continue
+
+
         dataset = tf.data.TFRecordDataset(id_file)
         dataset = dataset.map(_parse_function)
         
@@ -46,9 +63,9 @@ def main():
             batches.append(video_ids[i:i + YT_DATALIST_LIMIT])
         
         asyncio.run(save_video_info(batches, h5_filename))
-
+        s3_client.upload_file(h5_filename, bucket_name, f'{s3_prefix}/{h5_filename}')
         end = time.time()
         print(f"Processed {id_file} in {end - start} seconds")
 
 if __name__ == '__main__':
-    main()
+    main('vit-sae')
