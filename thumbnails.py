@@ -22,7 +22,13 @@ async def download_thumbnail(session, url):
     try:
         async with session.get(url) as response:
             image = Image.open(BytesIO(await response.read()))
-            return np.array(image)
+            if image.size != (480, 360):
+                return np.array([])  # Return an empty array if the image is not the correct size
+
+            a = np.array(image)
+            if a.shape != (360, 480, 3):
+                return np.array([])
+            return a
 
     except Exception as e:
         print(f"Error downloading image: {e}")
@@ -39,7 +45,7 @@ async def extract_data(session, video_data):
     thumbnails = await asyncio.gather(*tasks)
     
     for i, item in enumerate(video_data.get('items', [])):
-        if 'viewCount' in item['statistics'] and 'likeCount' in item['statistics'] and 'commentCount' in item['statistics']:
+        if 'viewCount' in item['statistics'] and 'likeCount' in item['statistics'] and 'commentCount' in item['statistics'] and thumbnails[i].size > 0:
             videos.append({
                 'videoId': item['id'],
                 'title': item['snippet']['title'],
@@ -82,15 +88,12 @@ async def save_video_info(video_id_lists, h5_filename):
             
     with h5py.File(h5_filename, 'w') as hf:
         for column in outer_df.columns:
+            print(len(outer_df[column]), column)
             if outer_df[column].dtype == object and column != 'thumbnailStandard':  # Handle string data
                 encoded_data = outer_df[column].apply(lambda x: x.encode('utf-8') if isinstance(x, str) else x)
                 hf.create_dataset(column, (len(encoded_data),), dtype=h5py.special_dtype(vlen=str), data=encoded_data)
             elif column == 'thumbnailStandard':
-                # Ensure all thumbnail arrays are the same shape
-                max_shape = max((img.shape for img in outer_df[column]), key=lambda x: (x[0], x[1]))
-                # Pad images to have the same max shape
-                thumbnail_data = np.array([np.pad(img, [(0, max_shape[0] - img.shape[0]), (0, max_shape[1] - img.shape[1]), (0, 0)], mode='constant') for img in df[column]])
-                hf.create_dataset(column, data=thumbnail_data, dtype=np.uint8)
+                hf.create_dataset(column, data=list(outer_df[column].values))
             else:
                 hf.create_dataset(column, data=outer_df[column])
 

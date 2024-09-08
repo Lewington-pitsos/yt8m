@@ -42,11 +42,18 @@ def main(bucket_name):
     end = time.time()
     print(f"Resolved all ids in {end - start} seconds")
 
+    s3_files = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=f'{s3_prefix}/')['Contents']
+
     for id_file in id_files:
         start = time.time()
         h5_filename = f"{id_file.replace('.tfrecord', '.h5')}"
         if os.path.exists(h5_filename):
             print(f"Skipping {id_file} because {h5_filename} already exists")
+            continue
+        
+        s3_path = f'{s3_prefix}/{h5_filename}' 
+        if any(f['Key'] == s3_path for f in s3_files):
+            print(f"Skipping {id_file} because {h5_filename} already exists in s3")
             continue
 
 
@@ -63,7 +70,7 @@ def main(bucket_name):
             batches.append(video_ids[i:i + YT_DATALIST_LIMIT])
         
         asyncio.run(save_video_info(batches, h5_filename))
-        s3_client.upload_file(h5_filename, bucket_name, f'{s3_prefix}/{h5_filename}')
+        s3_client.upload_file(h5_filename, bucket_name, s3_path)
         end = time.time()
         print(f"Processed {id_file} in {end - start} seconds")
 
