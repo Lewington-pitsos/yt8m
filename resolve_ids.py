@@ -69,19 +69,24 @@ async def update_tfrecord(input_path, output_path):
         print(f"Processed {count} records from {input_path} out of {len(resolved_ids)}, percentage: {count / len(resolved_ids) * 100}%")
 
 def process_file(input_path, output_path):
-    start = time.time()
     asyncio.run(update_tfrecord(input_path, output_path))
-    print(f"Processed {input_path} in {time.time() - start} seconds")
 
-if __name__ == '__main__':
-    files = ['video/' + f for f in os.listdir('video') if f.endswith('.tfrecord') and 'video_ids' not in f]
-    files = files
+def resolve_all(files, n_workers=12):
     output_paths = [f.replace('train', 'video_ids.train') for f in files]
 
     print(files)
 
-    start = time.time()
-    with multiprocessing.Pool(processes=12) as pool:
+    with multiprocessing.Pool(processes=n_workers) as pool:
         pool.starmap(process_file, zip(files, output_paths))
     
+    return output_paths
+
+if __name__ == '__main__':
+    files = ['video/' + f for f in os.listdir('video') if f.endswith('.tfrecord') and 'video_ids' not in f]
+    files = files
+
+    start = time.time()
+
+    resolve_all(files)
+
     print(f"Total execution time: {time.time() - start} seconds")
