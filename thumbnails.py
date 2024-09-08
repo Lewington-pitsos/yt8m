@@ -33,7 +33,7 @@ async def extract_data(session, video_data):
     tasks = []
 
     for item in video_data.get('items', []):
-        thumbnail_url = item['snippet']['thumbnails']['high']['url']
+        thumbnail_url = item['snippet']['thumbnails']['high']['url'].replace('https://', 'http://')
         tasks.append(download_thumbnail(session, thumbnail_url))
     
     thumbnails = await asyncio.gather(*tasks)
@@ -66,7 +66,8 @@ async def save_video_info(video_id_lists, h5_filename):
     youtube = build(API_SERVICE_NAME, API_VERSION, developerKey=credentials['YOUTUBE_DATA_V3'], num_retries=5)
 
     outer_df = pd.DataFrame()
-    async with aiohttp.ClientSession() as session:
+    connector = aiohttp.TCPConnector(limit=300)
+    async with aiohttp.ClientSession(connector=connector) as session:
         for video_ids in video_id_lists:
 
             video_details = get_video_details(youtube, video_ids)

@@ -25,9 +25,7 @@ def main():
 
     print(f"Found {len(tfrecords)} tfrecords")
 
-    # id_files = resolve_all(tfrecords)
-
-    id_files = [f.replace('train', 'video_ids.train') for f in tfrecords]
+    id_files = resolve_all(tfrecords)
 
     end = time.time()
     print(f"Resolved all ids in {end - start} seconds")
