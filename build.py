@@ -20,7 +20,7 @@ def _parse_function(proto):
 
 YT_DATALIST_LIMIT = 50
 
-def main(bucket_name):
+def main(bucket_name, input_path, s3_prefix):
     start = time.time()
 
     with open('.credentials.json') as f:
@@ -32,8 +32,7 @@ def main(bucket_name):
         aws_secret_access_key=credentials['AWS_SECRET']
     )
 
-    s3_prefix = 'yt8m-thumbs'
-    tfrecords = ['video/' + f for f in os.listdir('video') if f.endswith('.tfrecord') and 'video_ids' not in f]
+    tfrecords = [input_path + f for f in os.listdir('video') if f.endswith('.tfrecord') and 'video_ids' not in f]
 
     print(f"Found {len(tfrecords)} tfrecords")
 
@@ -56,7 +55,6 @@ def main(bucket_name):
             print(f"Skipping {id_file} because {h5_filename} already exists in s3")
             continue
 
-
         dataset = tf.data.TFRecordDataset(id_file)
         dataset = dataset.map(_parse_function)
         
@@ -75,4 +73,5 @@ def main(bucket_name):
         print(f"Processed {id_file} in {end - start} seconds")
 
 if __name__ == '__main__':
-    main('vit-sae')
+    s3_prefix = 'yt8m-thumbs'
+    main('vit-sae', 'video', s3_prefix)
