@@ -37,8 +37,21 @@ def _parse_function(proto):
     return tf.io.parse_single_example(proto, keys_to_features)
 
 async def resolve_ids(dataset):
+    record_ids = []
+
+    ds = iter(dataset)
+
+    while True:
+        try:
+            record = next(ds)
+            record_ids.append(record['id'].numpy().decode('utf-8'))
+        except StopIteration:
+            break
+        except Exception as e:
+            print(f"Error while decoding record: {str(e)}")
+
     async with aiohttp.ClientSession() as session:
-        tasks = [resolve_video_id(session, record['id'].numpy().decode('utf-8')) for record in dataset]
+        tasks = [resolve_video_id(session, id) for id in record_ids]
         resolved_ids = await asyncio.gather(*tasks)
         return resolved_ids
 

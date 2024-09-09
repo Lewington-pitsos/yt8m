@@ -5,3 +5,5 @@ video
 
 **/.terraform*
 **/*.tfstate*
+
+cruft

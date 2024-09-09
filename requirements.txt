@@ -1,0 +1,9 @@
+boto3
+tensorflow
+aiohttp
+google-api-python-client
+pandas
+pillow
+numpy
+h5py
+six

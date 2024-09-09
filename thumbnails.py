@@ -81,14 +81,16 @@ async def save_video_info(video_id_lists, h5_filename):
             videos_list = await extract_data(session, video_details)
             df = pd.DataFrame(videos_list)
 
-            df['duration_seconds'] = df['duration'].apply(lambda x: pd.to_timedelta(x).total_seconds())
-            df.drop('duration', axis=1, inplace=True)
+            if 'duration' in df.columns:
+                df['duration_seconds'] = df['duration'].apply(lambda x: pd.to_timedelta(x).total_seconds())
+                df.drop('duration', axis=1, inplace=True)
 
-            outer_df = pd.concat([outer_df, df], ignore_index=True)
+                outer_df = pd.concat([outer_df, df], ignore_index=True)
+            else:
+                print("Error: No duration column in DataFrame", df)
             
     with h5py.File(h5_filename, 'w') as hf:
         for column in outer_df.columns:
-            print(len(outer_df[column]), column)
             if outer_df[column].dtype == object and column != 'thumbnailStandard':  # Handle string data
                 encoded_data = outer_df[column].apply(lambda x: x.encode('utf-8') if isinstance(x, str) else x)
                 hf.create_dataset(column, (len(encoded_data),), dtype=h5py.special_dtype(vlen=str), data=encoded_data)

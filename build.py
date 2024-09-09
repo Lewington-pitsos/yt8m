@@ -20,7 +20,7 @@ def _parse_function(proto):
 
 YT_DATALIST_LIMIT = 50
 
-def main(bucket_name, input_path, s3_prefix):
+def main(bucket_name, input_path, s3_prefix, remove_local_h5=False):
     start = time.time()
 
     with open('.credentials.json') as f:
@@ -32,7 +32,7 @@ def main(bucket_name, input_path, s3_prefix):
         aws_secret_access_key=credentials['AWS_SECRET']
     )
 
-    tfrecords = [input_path + f for f in os.listdir('video') if f.endswith('.tfrecord') and 'video_ids' not in f]
+    tfrecords = [input_path +'/' + f for f in os.listdir('video') if f.endswith('.tfrecord') and 'video_ids' not in f]
 
     print(f"Found {len(tfrecords)} tfrecords")
 
@@ -69,9 +69,11 @@ def main(bucket_name, input_path, s3_prefix):
         
         asyncio.run(save_video_info(batches, h5_filename))
         s3_client.upload_file(h5_filename, bucket_name, s3_path)
+        if remove_local_h5:
+            os.remove(h5_filename)
         end = time.time()
         print(f"Processed {id_file} in {end - start} seconds")
 
 if __name__ == '__main__':
     s3_prefix = 'yt8m-thumbs'
-    main('vit-sae', 'video', s3_prefix)
+    main('vit-sae', 'video', s3_prefix, remove_local_h5=True)
