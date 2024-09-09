@@ -30,4 +30,4 @@ ssh -i ~/.ssh/id_sache ubuntu@$INSTANCE_IP 'git clone git@github.com:lewington-p
 scp -i ~/.ssh/id_sache -o StrictHostKeyChecking=no .credentials.json ubuntu@$INSTANCE_IP:~/yt8m/
 echo "Copied credentials over"
 
-sed -i '' "/^Host aws-saevit$/,/^$/ s/HostName .*/HostName $INSTANCE_IP/" /Users/plato/.ssh/config
+sed -i '' "/^Host aws-yt8m$/,/^$/ s/HostName .*/HostName $INSTANCE_IP/" /Users/plato/.ssh/config

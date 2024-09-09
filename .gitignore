@@ -2,3 +2,6 @@
 
 video
 .credentials.json
+
+**/.terraform*
+**/*.tfstate*
