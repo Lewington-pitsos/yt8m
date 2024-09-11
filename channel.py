@@ -6,17 +6,17 @@ from thumbnails import save_to_file, get_video_ids
 
 channel_mapping = {
     'UCX6OQ3DkcsbYNE6H8uQQuVA': 'mrbeast',
-    'UCk8GzjMOrta8yxDcKfylJYw': 'kids-diana-show',
-    'UCbCmjCuTUZos6Inko4u57UQ': 'cocomelon',
-    'UCJplp5SjeGSdVdwsfb9Q7lQ': 'like-nastya',
-    'UCvlE5gTbOvjiolFlEm-c_Ow': 'vlad-and-niki',
-    'UCFFbwnve3yF62-tVXkTyHqg': 'zee-music-channel',
-    'UCq-Fj5jknLsUf-MWSy4_brA': 'tseries',
+    # 'UCk8GzjMOrta8yxDcKfylJYw': 'kids-diana-show',
+    # 'UCbCmjCuTUZos6Inko4u57UQ': 'cocomelon',
+    # 'UCJplp5SjeGSdVdwsfb9Q7lQ': 'like-nastya',
+    # 'UCvlE5gTbOvjiolFlEm-c_Ow': 'vlad-and-niki',
+    # 'UCFFbwnve3yF62-tVXkTyHqg': 'zee-music-channel',
+    # 'UCq-Fj5jknLsUf-MWSy4_brA': 'tseries',
 }
 
 
 if __name__ == '__main__':
-    parent_dir = 'channel'
+    parent_dir = 'test_data'
     bucket_name = 'vit-sae'
     max_videos_per_file = 3000
 
@@ -42,6 +42,10 @@ if __name__ == '__main__':
         common_prefix = f"{parent_dir}/{channel_name}"
         if not os.path.exists(common_prefix):
             os.makedirs(common_prefix)
+
+        # save config file locally
+        with open(f"{common_prefix}/config.json", 'w') as f:
+            json.dump(config, f)
             
         for i in range(0, len(all_video_ids), max_videos_per_file):
             vid_id_batch = all_video_ids[i:i + max_videos_per_file]

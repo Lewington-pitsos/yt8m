@@ -1,0 +1,4 @@
+{
+    "numeric_keys": ["viewCount", "likeCount", "commentCount", "publishedAt", "duration"],
+    "string_keys": ["videoId", "title", "tags", "description", "channelId", "channelTitle"]
+}

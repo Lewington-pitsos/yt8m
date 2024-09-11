@@ -200,6 +200,7 @@ def get_video_ids(channel_id):
         next_page_token = playlist_response.get('nextPageToken')
         if not next_page_token:
             break
+        break
 
     return video_ids
 
