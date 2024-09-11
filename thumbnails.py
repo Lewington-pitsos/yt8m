@@ -46,7 +46,6 @@ async def add_thumbnail(session, video_data):
 
     for item in video_data.get('items', []):
         thumbs = item['snippet']['thumbnails']
-        print(thumbs.keys())
 
         if 'high' in thumbs:
             thumbnail_url = thumbs['high']['url'].replace('https://', 'http://')
