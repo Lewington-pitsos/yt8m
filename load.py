@@ -97,9 +97,70 @@ class VideoDataset(Dataset):
 
     def __len__(self):
         return len(self.index_map)
+    
+    def _get_file_data(self, file_idx):
+        data = {}
+        for data_type in self.data_types:
+            data_dict = self._load_data_dict(file_idx, data_type)
+
+            if data_type == 'string':
+                for k, v in data_dict.items():
+                    data[k] = v
+            else:
+                for k, v in data_dict.items():
+                    data[k] = v
+
+        return data
 
     def _get_slice_efficient(self, idx):
-        pass
+        start, stop, step = idx.start, idx.stop, idx.step
+        if step != 1 and step is not None:
+            raise ValueError("Step must be 1 or None, got", step)
+
+        sample_idx = 0
+        file_idx = 0
+        while sample_idx + self.lengths[file_idx] < start:
+            sample_idx += self.lengths[file_idx]
+            file_idx += 1
+        
+        all_data = {}
+        while sample_idx < stop:
+            file_data = self._get_file_data(file_idx)
+
+            if sample_idx < start or sample_idx + self.lengths[file_idx] >= stop:
+                if sample_idx < start:
+                    relative_start = start - sample_idx
+                else:
+                    relative_start = 0
+
+                if sample_idx + self.lengths[file_idx] >= stop:
+                    diff = sample_idx + self.lengths[file_idx] - stop
+                    relative_end = self.lengths[file_idx] - diff
+                else:
+                    relative_end = self.lengths[file_idx]
+
+                for k, v in file_data.items():
+                    file_data[k] = v[relative_start:relative_end]
+
+            for k, v in file_data.items():
+                if k not in all_data:
+                    if isinstance(v, list):
+                        all_data[k] = []
+                    else:
+                        all_data[k] = torch.empty((0, *v.shape[1:]), dtype=v.dtype, device=v.device)
+
+                if isinstance(v, list):
+                    all_data[k] += v
+                else:
+                    all_data[k] = torch.cat((all_data[k], v), dim=0)
+
+            sample_idx += self.lengths[file_idx]
+            file_idx += 1
+
+            if file_idx >= len(self.lengths):
+                break
+
+        return all_data
 
     def _get_single_item(self, idx):
         file_idx = self.index_map[idx]
@@ -107,15 +168,9 @@ class VideoDataset(Dataset):
 
         item_offset = idx - sum(self.lengths[:file_idx])
 
-        for data_type in self.data_types:
-            data_dict = self._load_data_dict(file_idx, data_type)
-
-            if data_type == 'string':
-                for k, v in data_dict.items():
-                    data[k] = v[item_offset]
-            else:
-                for k, v in data_dict.items():
-                    data[k] = v[item_offset]
+        file_data = self._get_file_data(file_idx)
+        for k, v in file_data.items():
+            data[k] = v[item_offset]
 
         return data
 

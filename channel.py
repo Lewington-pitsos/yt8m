@@ -18,7 +18,7 @@ channel_mapping = {
 if __name__ == '__main__':
     parent_dir = 'test_data'
     bucket_name = 'vit-sae'
-    max_videos_per_file = 3000
+    max_videos_per_file = 10
 
     for channel_id, channel_name in channel_mapping.items():
         print("starting with", channel_name)
@@ -44,7 +44,7 @@ if __name__ == '__main__':
             os.makedirs(common_prefix)
 
         # save config file locally
-        with open(f"{common_prefix}/config.json", 'w') as f:
+        with open(os.path.join(common_prefix, "config.json"), 'w') as f:
             json.dump(config, f)
             
         for i in range(0, len(all_video_ids), max_videos_per_file):
