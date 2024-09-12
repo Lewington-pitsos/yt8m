@@ -49,4 +49,4 @@ def test_load():
 
     sample = ds[9]
 
-    assert samples[0]['viewCount'] == sample['viewCount']
+    assert samples['viewCount'][0] == sample['viewCount']
