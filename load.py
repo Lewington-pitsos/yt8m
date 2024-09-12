@@ -1,14 +1,13 @@
 import json
 import os
 import torch
-import h5py
 from torch.utils.data import Dataset
 from collections import defaultdict
 
 # add device
 
 class VideoDataset(Dataset):
-    def __init__(self, path, data_types=['numeric', 'string', 'thumbnail']):
+    def __init__(self, path, device='cpu', data_types=['numeric', 'string', 'thumbnail']):
         assert len(data_types) > 0, "Data types must be specified"
         assert all([data_type in ['numeric', 'string', 'thumbnail'] for data_type in data_types]), "Data types must be one of ['numeric', 'string', 'thumbnail']"
         assert os.path.exists(path), f"Path {path} does not exist"
@@ -16,6 +15,7 @@ class VideoDataset(Dataset):
         self.parent_dir = path  
         config_path = os.path.join(self.parent_dir, 'config.json')
         self.data_types = data_types
+        self.device = device
 
         with open(config_path, 'r') as f:
             self.config = json.load(f)
@@ -64,7 +64,7 @@ class VideoDataset(Dataset):
             with open(file_path, 'r') as f:
                 return json.load(f)
 
-        return torch.load(file_path)
+        return torch.load(file_path, map_location=self.device)
     
 
     def _numeric_to_dict(self, data):
