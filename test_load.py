@@ -46,3 +46,7 @@ def test_load():
     assert len(samples['viewCount']) == 1
     assert len(samples['likeCount']) == 1
     assert samples['thumbnail'].shape[0] == 1
+
+    sample = ds[9]
+
+    assert samples[0]['viewCount'] == sample['viewCount']
